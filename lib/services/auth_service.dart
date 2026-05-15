@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleUserData {
@@ -17,7 +18,9 @@ class GoogleUserData {
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   Future<UserCredential> login(String email, String password) async {
     return await _auth.signInWithEmailAndPassword(
@@ -37,6 +40,23 @@ class AuthService {
   }
 
   Future<GoogleUserData?> signInWithGoogle() async {
+    // Web: use Firebase Auth popup directly (google_sign_in v6 removed idToken on web)
+    if (kIsWeb) {
+      final provider = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile');
+      final userCredential = await _auth.signInWithPopup(provider);
+      final user = userCredential.user;
+      if (user == null) return null;
+      return GoogleUserData(
+        displayName: user.displayName ?? user.email!.split('@').first,
+        email: user.email!,
+        photoUrl: user.photoURL,
+        uid: user.uid,
+      );
+    }
+
+    // Mobile: use google_sign_in as before
     final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) return null;
 
@@ -65,7 +85,7 @@ class AuthService {
   }
 
   Future<void> signOutGoogle() async {
-    await _googleSignIn.signOut();
+    if (!kIsWeb) await _googleSignIn.signOut();
     await _auth.signOut();
   }
 }
