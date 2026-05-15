@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../services/auth_service.dart';
 import '../views/screens/kanban_board_screen.dart';
 
+
 class AuthController extends GetxController {
   final usernameController = TextEditingController();
   final emailController = TextEditingController();
@@ -29,6 +30,42 @@ class AuthController extends GetxController {
     return RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$')
         .hasMatch(email.trim());
   }
+    
+  Future<void> signInWithGoogle() async {
+    await _authenticateWithGoogle(isSignUp: false);
+  }
+
+  Future<void> signUpWithGoogle() async {
+    await _authenticateWithGoogle(isSignUp: true);
+  }
+
+  Future<void> _authenticateWithGoogle({required bool isSignUp}) async {
+    isLoading.value = true;
+    try {
+      final googleUser = await _authService.signInWithGoogle();
+      if (googleUser == null) return;
+
+      _showSuccessSnackbar(
+        isSignUp ? 'Account Created' : 'Welcome back',
+        'Signed in as ${googleUser.displayName}',
+      );
+      Get.offAll(() => KanbanBoardScreen(username: googleUser.displayName));
+    } on FirebaseAuthException catch (e) {
+      _showErrorSnackbar(_firebaseErrorMessage(e.code));
+    } catch (e) {
+      final message = e.toString();
+      if (message.contains('ApiException: 10')) {
+        _showErrorSnackbar(
+          'Google Sign-In is not configured. Add your SHA-1 in Firebase Console.',
+        );
+      } else {
+        _showErrorSnackbar('Google sign-in failed. Please try again.');
+      }
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
 
   Future<void> login() async {
     final email = emailController.text.trim();

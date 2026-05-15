@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/auth_controller.dart';
 import 'register.dart';
+import '../widgets/google_sign_in_button.dart';
+
 
 class LoginScreen extends GetView<AuthController> {
   const LoginScreen({super.key});
@@ -107,7 +109,7 @@ class LoginScreen extends GetView<AuthController> {
                               ),
                             ),
                     )),
-                const SizedBox(height: 20),
+                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -123,6 +125,11 @@ class LoginScreen extends GetView<AuthController> {
                       ),
                     ),
                   ],
+                ),
+                 const SizedBox(height: 20),
+                GoogleSignInButton(
+                  text: 'Login with Google',
+                  onPressed: controller.signInWithGoogle,
                 ),
               ],
             ),
